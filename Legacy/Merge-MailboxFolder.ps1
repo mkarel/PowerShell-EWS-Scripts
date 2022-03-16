@@ -1730,19 +1730,12 @@ function CreateService($smtpAddress)
         2007 {$ExchangeVersion = "Exchange2007_SP1" }
         2010 {$ExchangeVersion = "Exchange2010_SP2"  }
         2013 {$ExchangeVersion = "Exchange2013_SP1" }
-        2016 {$ExchangeVersion = "Exchange2013_SP1" }
+        2016 {$ExchangeVersion = "Exchange2016" }
         Default {$ExchangeVersion = "Exchange2010_SP2"}
     }
     Log -Details "Connecting to Exchange Version:$ExchangeVersion" -Colour Yellow
-    # First of all check to see if we have a service object for this mailbox already
-    if ($script:services -eq $null)
-    {
-        $script:services = @{}
-    }
-    if ($script:services.ContainsKey($smtpAddress))
-    {
-        return $script:services[$smtpAddress]
-    }
+    #Create a new Exchange service
+    $exchangeService = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService([Microsoft.Exchange.WebServices.Data.ExchangeVersion]::$ExchangeVersion)
     
     # Do we need to use OAuth?
     if ($OAuth)
