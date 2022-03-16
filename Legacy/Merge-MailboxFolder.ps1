@@ -134,8 +134,9 @@ param (
     [Parameter(Mandatory=$False,HelpMessage="If specified, requests are directed to Office 365 endpoint (this overrides -EwsUrl)")]
     [switch]$Office365,
 
-    [Parameter(Mandatory=$False,HelpMessage="By default, script will specify Exchange 2010 (to work with 2010 and higher).  If using 2007, this switch must be specified.")]
-    [switch]$Exchange2007,
+    [Parameter(Mandatory=$False,HelpMessage="By default, script will specify Exchange 2010 (to work with 2010 and newer). to work with other versions of Exchange Specify the version Valid entries are 2007,2010,2013,2016.")]
+    [ValidateSet('2007','2010','2013','2016')]
+    [String]$ExchangeVersion,
 
     [Parameter(Mandatory=$False,HelpMessage="Path to managed API (if omitted, a search of standard paths is performed)")]
     [string]$EWSManagedApiPath = "",
@@ -1723,15 +1724,19 @@ function CreateService($smtpAddress)
     }
 
     # Create new service
-    if ($Exchange2007)
-    {
-        $exchangeService = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService([Microsoft.Exchange.WebServices.Data.ExchangeVersion]::Exchange2007_SP1)
+    # Creates and returns an ExchangeService object to be used to access mailboxes
+    # Set Exchange Version based on user parm 
+    switch ($ExchangeVersion) {
+        2007 {$ExchangeVersion = "Exchange2007_SP1" }
+        2010 {$ExchangeVersion = "Exchange2010_SP2"  }
+        2013 {$ExchangeVersion = "Exchange2013_SP1" }
+        2016 {$ExchangeVersion = "Exchange2016" }
+        Default {$ExchangeVersion = "Exchange2010_SP2"}
     }
-    else
-    {
-        $exchangeService = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService([Microsoft.Exchange.WebServices.Data.ExchangeVersion]::Exchange2010_SP2)
-    }
-
+    Log -Details "Connecting to Exchange Version:$ExchangeVersion" -Colour Yellow
+    #Create a new Exchange service
+    $exchangeService = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService([Microsoft.Exchange.WebServices.Data.ExchangeVersion]::$ExchangeVersion)
+    
     # Do we need to use OAuth?
     if ($OAuth)
     {
